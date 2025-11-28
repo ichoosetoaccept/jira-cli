@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/StevenACoffman/j2m v0.0.0-20221129131709-a8330742260e
 	github.com/atotto/clipboard v0.1.4
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/glamour v0.10.0

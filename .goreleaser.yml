@@ -61,20 +61,21 @@ checksum:
 
 brews:
   - name: jira-cli
-    homepage: "https://github.com/ankitpokhrel/jira-cli"
-    description: "🔥 Feature-rich interactive Jira command-line"
+    homepage: "https://github.com/ichoosetoaccept/jira-cli"
+    description: "🔥 Feature-rich interactive Jira command-line (enhanced fork)"
     license: "MIT"
 
     ids:
       - nix
 
     repository:
-      owner: ankitpokhrel
-      name: homebrew-jira-cli
+      owner: ichoosetoaccept
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
 
     custom_block: |
       head do
-        url "https://github.com/ankitpokhrel/jira-cli.git", branch: "main"
+        url "https://github.com/ichoosetoaccept/jira-cli.git", branch: "main"
         depends_on "go"
       end
 
@@ -92,17 +93,13 @@ brews:
       assert_includes help_text, "Version=\"#{version}\""
 
     commit_author:
-      name: ankitpokhrel
-      email: oss@ankit.pl
+      name: ichoosetoaccept
+      email: ichoosetoaccept@users.noreply.github.com
 
-    commit_msg_template: "Formula update for version {{ .Tag }}"
+    commit_msg_template: "chore(formula): update jira-cli to {{ .Tag }}"
 
     # Folder inside the repository to put the formula to.
     directory: Formula
-
-    # This will prevent goreleaser to actually try to commit the updated
-    # formula - leaving the responsibility of publishing it to the user.
-    skip_upload: true
 
 changelog:
   disable: true

@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/ankitpokhrel/jira-cli/internal/cmd/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmd/board"
 	"github.com/ankitpokhrel/jira-cli/internal/cmd/completion"
 	"github.com/ankitpokhrel/jira-cli/internal/cmd/epic"
@@ -145,6 +146,7 @@ func addChildCommands(cmd *cobra.Command) {
 		release.NewCmdRelease(),
 		man.NewCmdMan(),
 		refresh.NewCmdRefresh(),
+		api.NewCmdAPI(),
 	)
 }
 

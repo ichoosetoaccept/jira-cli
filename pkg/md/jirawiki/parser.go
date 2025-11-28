@@ -217,6 +217,68 @@ func secondPass(lines []string) string {
 	return out.String()
 }
 
+// tokenizeTextEffect handles tokenization of text effect tags like {{monospace}}, ??citation??, *bold*, etc.
+func tokenizeTextEffect(line string, beg, size int, tokens *[]*Token) int {
+	var end int
+
+	// Handle {{monospace}} specially
+	if beg+1 < len(line) && line[beg] == '{' && line[beg+1] == '{' {
+		closeIdx := strings.Index(line[beg+2:], "}}")
+		if closeIdx == -1 {
+			end = len(line) - 1
+		} else {
+			end = beg + 2 + closeIdx + 1 // Point to second }
+		}
+		word := line[beg : end+1]
+		*tokens = append(*tokens, &Token{
+			tag:      word,
+			family:   typeTagTextEffect,
+			startIdx: beg,
+			endIdx:   end,
+		})
+		return end + 1
+	}
+
+	// Handle ??citation?? specially
+	if beg+1 < len(line) && line[beg] == '?' && line[beg+1] == '?' {
+		closeIdx := strings.Index(line[beg+2:], "??")
+		if closeIdx == -1 {
+			end = len(line) - 1
+		} else {
+			end = beg + 2 + closeIdx + 1 // Point to second ?
+		}
+		word := line[beg : end+1]
+		*tokens = append(*tokens, &Token{
+			tag:      word,
+			family:   typeTagTextEffect,
+			startIdx: beg,
+			endIdx:   end,
+		})
+		return end + 1
+	}
+
+	// Handle single-character text effects like *bold*, _italic_, etc.
+	end = beg + 1
+	for end < len(line) && line[end] != line[beg] {
+		end++
+	}
+
+	var word string
+	if end < size-1 {
+		word = line[beg : end+1]
+	} else {
+		word = line[beg:end]
+	}
+
+	*tokens = append(*tokens, &Token{
+		tag:      word,
+		family:   typeTagTextEffect,
+		startIdx: beg,
+		endIdx:   end,
+	})
+	return end + 1
+}
+
 // Mark tokens in a given string.
 func tokenize(line string) []*Token { //nolint:gocyclo
 	line = strings.TrimSpace(line)
@@ -236,44 +298,7 @@ out:
 
 		switch tagType {
 		case typeTagTextEffect:
-			// Handle {{monospace}} specially
-			if beg+1 < len(line) && line[beg] == '{' && line[beg+1] == '{' {
-				// Find closing }}
-				closeIdx := strings.Index(line[beg+2:], "}}")
-				if closeIdx == -1 {
-					end = len(line) - 1
-				} else {
-					end = beg + 2 + closeIdx + 1 // Point to second }
-				}
-				word := line[beg : end+1]
-				tokens = append(tokens, &Token{
-					tag:      word,
-					family:   typeTagTextEffect,
-					startIdx: beg,
-					endIdx:   end,
-				})
-				end++
-			} else {
-				end = beg + 1
-				for end < len(line) && line[end] != line[beg] {
-					end++
-				}
-
-				var word string
-				if end < size-1 {
-					word = line[beg : end+1]
-				} else {
-					word = line[beg:end]
-				}
-
-				tokens = append(tokens, &Token{
-					tag:      word,
-					family:   typeTagTextEffect,
-					startIdx: beg,
-					endIdx:   end,
-				})
-				end++
-			}
+			end = tokenizeTextEffect(line, beg, size, &tokens)
 		case typeTagHeading:
 			fallthrough
 		case typeTagInlineQuote:
@@ -434,6 +459,20 @@ func (t *Token) handleTextEffects(line string, out *strings.Builder) int {
 		out.WriteString(word)
 		out.WriteString(replacements[TagMonospace])
 		return t.startIdx + 2 + closeIdx + 1 // +1 for the second }
+	}
+
+	// Handle ??citation?? tags specially
+	if strings.HasPrefix(t.tag, "??") {
+		// Find closing ??
+		closeIdx := strings.Index(line[t.startIdx+2:], "??")
+		if closeIdx == -1 {
+			return t.endIdx
+		}
+		word := line[t.startIdx+2 : t.startIdx+2+closeIdx]
+		out.WriteString(replacements[TagCitation])
+		out.WriteString(word)
+		out.WriteString(replacements[TagCitation])
+		return t.startIdx + 2 + closeIdx + 1 // +1 for the second ?
 	}
 
 	word := line[t.startIdx+1 : t.endIdx]
@@ -626,6 +665,10 @@ func tokenStarts(idx int, tokens []*Token) (*Token, bool) {
 func getTagType(line string, beg int) string {
 	// Check for {{monospace}} first (two-character tag)
 	if beg+1 < len(line) && line[beg] == '{' && line[beg+1] == '{' {
+		return typeTagTextEffect
+	}
+	// Check for ??citation?? (two-character tag)
+	if beg+1 < len(line) && line[beg] == '?' && line[beg+1] == '?' {
 		return typeTagTextEffect
 	}
 	if isTextEffect(line[beg], line[beg+1]) {

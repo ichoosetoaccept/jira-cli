@@ -142,6 +142,11 @@ func TestParseTextEffectTags(t *testing.T) {
 			input:    "Use {{code}} for inline code.",
 			expected: "Use `code` for inline code.\n",
 		},
+		{
+			name:     "citation",
+			input:    "As ??someone?? once said.",
+			expected: "As *someone* once said.\n",
+		},
 	}
 
 	for _, tc := range cases {

@@ -159,22 +159,18 @@ func getCustomFieldsMapping() (map[string]string, error) {
 	return fieldsMap, nil
 }
 
-func runAPI(cmd *cobra.Command, args []string) {
-	// Check if the environment is initialized properly
-	configFile := viper.ConfigFileUsed()
-	if configFile == "" || !jiraConfig.Exists(configFile) {
-		cmdutil.Failed("Jira CLI is not initialized. Run 'jira init' first.")
-	}
+type apiFlags struct {
+	debug           bool
+	method          string
+	data            string
+	file            string
+	raw             bool
+	translateFields bool
+}
 
-	server := viper.GetString("server")
-	if server == "" {
-		cmdutil.Failed("Jira server URL is not configured. Run 'jira init' with the --server flag.")
-	}
-
+func parseFlags(cmd *cobra.Command) apiFlags {
 	debug, err := cmd.Flags().GetBool("debug")
 	cmdutil.ExitIfError(err)
-
-	endpoint := args[0]
 
 	method, err := cmd.Flags().GetString("method")
 	cmdutil.ExitIfError(err)
@@ -188,86 +184,69 @@ func runAPI(cmd *cobra.Command, args []string) {
 	raw, err := cmd.Flags().GetBool("raw")
 	cmdutil.ExitIfError(err)
 
-	var payload []byte
-
-	if file != "" && data != "" {
-		cmdutil.Failed("Cannot use both --data and --file")
-	}
-
-	if file != "" {
-		fmt.Printf("Reading payload from file: %s\n", file)
-		payload, err = os.ReadFile(file)
-		cmdutil.ExitIfError(err)
-	} else if data != "" {
-		payload = []byte(data)
-		if debug {
-			fmt.Printf("Request payload: %s\n", data)
-		}
-	}
-
-	// Show a progress spinner during the request
-	s := cmdutil.Info("Sending request to Jira API...")
-	defer s.Stop()
-
-	client := api.Client(jira.Config{Debug: debug})
-
-	var resp *http.Response
-	ctx := context.Background()
-	headers := jira.Header{
-		"Accept":       "application/json",
-		"Content-Type": "application/json",
-	}
-
-	// Ensure endpoint starts with a slash
-	if !strings.HasPrefix(endpoint, "/") {
-		endpoint = "/" + endpoint
-	}
-
-	// Combine server URL with the endpoint
-	targetURL := server + endpoint
-	if debug {
-		fmt.Printf("Sending %s request to: %s\n", method, targetURL)
-	}
-	resp, err = client.RequestURL(ctx, method, targetURL, payload, headers)
-
-	s.Stop()
-
-	if err != nil {
-		cmdutil.Failed("Request failed: %s", err)
-	}
-
-	defer func() { _ = resp.Body.Close() }()
-
-	body, err := io.ReadAll(resp.Body)
-	cmdutil.ExitIfError(err)
-
 	translateFields, err := cmd.Flags().GetBool("translate-fields")
 	cmdutil.ExitIfError(err)
 
-	// Try to pretty print JSON if the response appears to be JSON and raw mode is not enabled
-	if !raw && len(body) > 0 {
-		// Check if the response looks like JSON
-		trimmedBody := strings.TrimSpace(string(body))
-		isJSON := (strings.HasPrefix(trimmedBody, "{") && strings.HasSuffix(trimmedBody, "}")) ||
-			(strings.HasPrefix(trimmedBody, "[") && strings.HasSuffix(trimmedBody, "]"))
+	return apiFlags{
+		debug:           debug,
+		method:          method,
+		data:            data,
+		file:            file,
+		raw:             raw,
+		translateFields: translateFields,
+	}
+}
 
-		if isJSON {
-			// If we need to translate custom fields, do that before pretty printing
-			if translateFields {
-				body = translateCustomFields(body, debug)
-			}
-
-			var prettyJSON bytes.Buffer
-			err = json.Indent(&prettyJSON, body, "", "  ")
-			if err == nil {
-				body = prettyJSON.Bytes()
-			}
-		}
+func getPayload(flags apiFlags) []byte {
+	if flags.file != "" && flags.data != "" {
+		cmdutil.Failed("Cannot use both --data and --file")
 	}
 
+	if flags.file != "" {
+		fmt.Printf("Reading payload from file: %s\n", flags.file)
+		payload, err := os.ReadFile(flags.file)
+		cmdutil.ExitIfError(err)
+		return payload
+	}
+
+	if flags.data != "" {
+		if flags.debug {
+			fmt.Printf("Request payload: %s\n", flags.data)
+		}
+		return []byte(flags.data)
+	}
+
+	return nil
+}
+
+func formatResponseBody(body []byte, flags apiFlags) []byte {
+	if flags.raw || len(body) == 0 {
+		return body
+	}
+
+	trimmedBody := strings.TrimSpace(string(body))
+	isJSON := (strings.HasPrefix(trimmedBody, "{") && strings.HasSuffix(trimmedBody, "}")) ||
+		(strings.HasPrefix(trimmedBody, "[") && strings.HasSuffix(trimmedBody, "]"))
+
+	if !isJSON {
+		return body
+	}
+
+	if flags.translateFields {
+		body = translateCustomFields(body, flags.debug)
+	}
+
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
+		return prettyJSON.Bytes()
+	}
+
+	return body
+}
+
+func printResponse(resp *http.Response, body []byte, debug bool) {
 	fmt.Printf("HTTP/%d %s\n", resp.StatusCode, resp.Status)
 
-	// Print response headers if debug mode is enabled
 	if debug {
 		fmt.Println("\nResponse Headers:")
 		for k, v := range resp.Header {
@@ -277,4 +256,53 @@ func runAPI(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println(string(body))
+}
+
+func runAPI(cmd *cobra.Command, args []string) {
+	configFile := viper.ConfigFileUsed()
+	if configFile == "" || !jiraConfig.Exists(configFile) {
+		cmdutil.Failed("Jira CLI is not initialized. Run 'jira init' first.")
+	}
+
+	server := viper.GetString("server")
+	if server == "" {
+		cmdutil.Failed("Jira server URL is not configured. Run 'jira init' with the --server flag.")
+	}
+
+	flags := parseFlags(cmd)
+	endpoint := args[0]
+	payload := getPayload(flags)
+
+	s := cmdutil.Info("Sending request to Jira API...")
+	defer s.Stop()
+
+	client := api.Client(jira.Config{Debug: flags.debug})
+
+	if !strings.HasPrefix(endpoint, "/") {
+		endpoint = "/" + endpoint
+	}
+
+	targetURL := server + endpoint
+	if flags.debug {
+		fmt.Printf("Sending %s request to: %s\n", flags.method, targetURL)
+	}
+
+	headers := jira.Header{
+		"Accept":       "application/json",
+		"Content-Type": "application/json",
+	}
+
+	resp, err := client.RequestURL(context.Background(), flags.method, targetURL, payload, headers)
+	s.Stop()
+
+	if err != nil {
+		cmdutil.Failed("Request failed: %s", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	cmdutil.ExitIfError(err)
+
+	body = formatResponseBody(body, flags)
+	printResponse(resp, body, flags.debug)
 }

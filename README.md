@@ -453,6 +453,9 @@ not be the latest one if you for some reason have more than 5k comments in a tic
 ```sh
 # Show 5 recent comments when viewing the issue
 $ jira issue view ISSUE-1 --comments 5
+
+# Skip markdown parsing (useful when Jira wiki markup causes rendering issues)
+$ jira issue view ISSUE-1 --unformatted
 ```
 
 #### Link
@@ -677,6 +680,9 @@ $ jira sprint list SPRINT_ID -yHigh -a$(jira me)
 
 # List sprint issues order by the rank in ASC order
 $ jira sprint list SPRINT_ID --order-by rank --reverse
+
+# List sprints from a specific board (useful when project has multiple boards)
+$ jira sprint list --board 123
 ```
 
 #### Add
@@ -688,6 +694,35 @@ $ jira sprint add
 
 # Pass required parameters to skip prompt
 $ jira sprint add SPRINT_ID ISSUE-1 ISSUE-2
+```
+
+#### Create
+Create a new sprint in the board.
+
+```sh
+# Create a sprint with just a name
+$ jira sprint create "Sprint 42"
+
+# Create a sprint with start/end dates and goal
+$ jira sprint create --start 2025-01-01 --end 2025-01-14 --goal "Complete feature X" "Sprint 42"
+```
+
+### API
+
+Make authenticated requests directly to the Jira REST API. Useful for accessing endpoints not covered by other commands.
+
+```sh
+# GET request
+$ jira api /rest/api/3/project
+
+# POST request with JSON payload
+$ jira api -X POST /rest/api/3/issue -d '{"fields":{"project":{"key":"DEMO"},"summary":"Test","issuetype":{"name":"Task"}}}'
+
+# Use a file as request body
+$ jira api -X POST /rest/api/3/issue --file payload.json
+
+# Translate custom field IDs to friendly names
+$ jira api /rest/api/3/issue/PROJ-123 --translate-fields
 ```
 
 ### Releases

@@ -98,7 +98,7 @@ func add(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	err := func() error {
+	worklog, err := func() (*jira.Worklog, error) {
 		s := cmdutil.Info("Adding a worklog")
 		defer s.Stop()
 
@@ -108,7 +108,7 @@ func add(cmd *cobra.Command, args []string) {
 
 	server := viper.GetString("server")
 
-	cmdutil.Success("Worklog added to issue %q", ac.params.issueKey)
+	cmdutil.Success("Worklog %s added to issue %q", worklog.ID, ac.params.issueKey)
 	fmt.Printf("%s\n", cmdutil.GenerateServerBrowseURL(server, ac.params.issueKey))
 }
 

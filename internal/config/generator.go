@@ -18,6 +18,9 @@ import (
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 )
 
+// ErrNoInputRequired is returned when a required field is missing in no-input mode.
+var ErrNoInputRequired = fmt.Errorf("required field missing in non-interactive mode")
+
 const (
 	// Dir is a jira-cli config directory.
 	Dir = ".jira"
@@ -72,6 +75,7 @@ type JiraCLIConfig struct {
 	Board        string
 	Force        bool
 	Insecure     bool
+	NoInput      bool
 	MTLS         JiraCLIMTLSConfig
 }
 
@@ -212,6 +216,10 @@ func (c *JiraCLIConfigGenerator) configureInstallationType() error {
 	case strings.ToLower(jira.InstallationTypeLocal):
 		c.value.installation = jira.InstallationTypeLocal
 	default:
+		if cmdutil.IsNoInputMode() {
+			return fmt.Errorf("installation type required in non-interactive mode (use --cloud or --local)")
+		}
+
 		qs := &survey.Select{
 			Message: "Installation type:",
 			Help:    "Is this a cloud installation or an on-premise (local) installation.",
@@ -386,6 +394,9 @@ func (c *JiraCLIConfigGenerator) configureServerAndLoginDetails() error {
 
 	// Skip server prompt if already set
 	if c.value.server == "" {
+		if cmdutil.IsNoInputMode() {
+			return fmt.Errorf("server URL required in non-interactive mode")
+		}
 		qs = append(qs, &survey.Question{
 			Name: "server",
 			Prompt: &survey.Input{
@@ -414,6 +425,9 @@ func (c *JiraCLIConfigGenerator) configureServerAndLoginDetails() error {
 
 	// Skip login prompt for cookie auth (username already fetched from API)
 	if c.usrCfg.Login == "" && c.value.authType != jira.AuthTypeCookie {
+		if cmdutil.IsNoInputMode() {
+			return fmt.Errorf("login credentials required in non-interactive mode")
+		}
 		switch c.value.installation {
 		case jira.InstallationTypeCloud:
 			qs = append(qs, &survey.Question{
@@ -569,6 +583,9 @@ func (c *JiraCLIConfigGenerator) configureProjectAndBoardDetails() error {
 	}
 
 	if c.usrCfg.Project == "" {
+		if cmdutil.IsNoInputMode() {
+			return fmt.Errorf("default project required in non-interactive mode")
+		}
 		projectPrompt := survey.Select{
 			Message: "Default project:",
 			Help:    "This is your project key that you want to access by default when using the cli.",
@@ -590,6 +607,9 @@ func (c *JiraCLIConfigGenerator) configureProjectAndBoardDetails() error {
 	defaultBoardSuggestions := c.boardSuggestions
 
 	if c.usrCfg.Board == "" {
+		if cmdutil.IsNoInputMode() {
+			return fmt.Errorf("default board required in non-interactive mode")
+		}
 		for {
 			boardPrompt := &survey.Question{
 				Name: "",
@@ -834,6 +854,10 @@ func (c *JiraCLIConfigGenerator) write(path string) (string, error) {
 		config.Set("insecure", c.usrCfg.Insecure)
 	}
 
+	if c.usrCfg.NoInput {
+		config.Set("no_input", c.usrCfg.NoInput)
+	}
+
 	config.Set("installation", c.value.installation)
 	config.Set("server", c.value.server)
 	config.Set("login", c.value.login)
@@ -925,6 +949,10 @@ func Exists(file string) bool {
 }
 
 func shallOverwrite() bool {
+	if cmdutil.IsNoInputMode() {
+		return false
+	}
+
 	var ans bool
 
 	prompt := &survey.Confirm{

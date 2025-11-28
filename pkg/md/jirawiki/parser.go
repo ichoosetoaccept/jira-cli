@@ -20,10 +20,18 @@ const (
 	TagPanel         = "{panel}"
 	TagCodeBlock     = "{code}"
 	TagNoFormat      = "{noformat}"
+	TagColor         = "{color"
 	TagLink          = "["
 	TagOrderedList   = "#"
 	TagUnorderedList = "*" // '*' can be either be bold or an unordered list 🤦.
 	TagBold          = "*"
+	TagItalic        = "_"
+	TagStrikethrough = "-"
+	TagInserted      = "+"
+	TagSuperscript   = "^"
+	TagSubscript     = "~"
+	TagCitation      = "??"
+	TagMonospace     = "{{"
 	TagTable         = "||"
 
 	// Let's group tags based on their behavior.
@@ -34,6 +42,7 @@ const (
 	typeTagReferenceLink = "link"
 	typeTagFencedCode    = "code"
 	typeTagTable         = "table"
+	typeTagColor         = "color"
 	typeTagOther         = "other"
 
 	// Supported attributes.
@@ -64,20 +73,27 @@ var validTags = []string{
 }
 
 var replacements = map[string]string{
-	TagHeading1:    "#",  // '#' can be either be a h1 tag or an ordered list 🤷.
-	TagHeading2:    "##", // '##' could mean a h2 tag or indentation for an ordered list 😑.
-	TagHeading3:    "###",
-	TagHeading4:    "####",
-	TagHeading5:    "#####",
-	TagHeading6:    "######",
-	TagQuote:       "> ",
-	TagPanel:       "---",
-	TagBlockQuote:  ">",
-	TagCodeBlock:   "```",
-	TagNoFormat:    "```",
-	TagOrderedList: "-",
-	TagBold:        "**",
-	TagTable:       "|",
+	TagHeading1:      "#",  // '#' can be either be a h1 tag or an ordered list 🤷.
+	TagHeading2:      "##", // '##' could mean a h2 tag or indentation for an ordered list 😑.
+	TagHeading3:      "###",
+	TagHeading4:      "####",
+	TagHeading5:      "#####",
+	TagHeading6:      "######",
+	TagQuote:         "> ",
+	TagPanel:         "---",
+	TagBlockQuote:    ">",
+	TagCodeBlock:     "```",
+	TagNoFormat:      "```",
+	TagOrderedList:   "-",
+	TagBold:          "**",
+	TagItalic:        "_",
+	TagStrikethrough: "~~", // Markdown strikethrough
+	TagInserted:      "",   // No direct markdown equivalent, just strip tags
+	TagSuperscript:   "",   // No direct markdown equivalent, just strip tags
+	TagSubscript:     "",   // No direct markdown equivalent, just strip tags
+	TagCitation:      "*",  // Render as italic/emphasis
+	TagMonospace:     "`",  // Inline code
+	TagTable:         "|",
 }
 
 // Parse converts input string to Jira markdown.
@@ -161,6 +177,8 @@ func secondPass(lines []string) string {
 					end = token.handleReferenceLink(line, &out)
 				case typeTagTable:
 					end = token.handleTable(line, &out)
+				case typeTagColor:
+					end = token.handleColor(line, &out)
 				case typeTagOther:
 					if token.tag == TagQuote {
 						// If end is same as size of the input, it implies that
@@ -218,25 +236,44 @@ out:
 
 		switch tagType {
 		case typeTagTextEffect:
-			end = beg + 1
-			for end < len(line) && line[end] != line[beg] {
+			// Handle {{monospace}} specially
+			if beg+1 < len(line) && line[beg] == '{' && line[beg+1] == '{' {
+				// Find closing }}
+				closeIdx := strings.Index(line[beg+2:], "}}")
+				if closeIdx == -1 {
+					end = len(line) - 1
+				} else {
+					end = beg + 2 + closeIdx + 1 // Point to second }
+				}
+				word := line[beg : end+1]
+				tokens = append(tokens, &Token{
+					tag:      word,
+					family:   typeTagTextEffect,
+					startIdx: beg,
+					endIdx:   end,
+				})
+				end++
+			} else {
+				end = beg + 1
+				for end < len(line) && line[end] != line[beg] {
+					end++
+				}
+
+				var word string
+				if end < size-1 {
+					word = line[beg : end+1]
+				} else {
+					word = line[beg:end]
+				}
+
+				tokens = append(tokens, &Token{
+					tag:      word,
+					family:   typeTagTextEffect,
+					startIdx: beg,
+					endIdx:   end,
+				})
 				end++
 			}
-
-			var word string
-			if end < size-1 {
-				word = line[beg : end+1]
-			} else {
-				word = line[beg:end]
-			}
-
-			tokens = append(tokens, &Token{
-				tag:      word,
-				family:   typeTagTextEffect,
-				startIdx: beg,
-				endIdx:   end,
-			})
-			end++
 		case typeTagHeading:
 			fallthrough
 		case typeTagInlineQuote:
@@ -291,18 +328,19 @@ out:
 			})
 		default:
 			end = beg + 1
-			for end < size && line[end] != '*' && line[end] != '{' && line[end] != '}' && line[end] != '[' && line[end] != ']' {
+			for end < size && !isTokenChar(line[end]) {
 				end++
 			}
 
-			if end != size && line[end] != '*' && line[end] != '{' && line[end] != '[' {
+			if end != size && !isStartTokenChar(line[end]) {
 				end++
 			}
 
 			word := line[beg:end]
 			word, attrs := extractAttributes(word)
 
-			if isToken(word) {
+			switch {
+			case isToken(word):
 				fam := typeTagOther
 				if word == TagCodeBlock || word == TagNoFormat {
 					fam = typeTagFencedCode
@@ -312,6 +350,22 @@ out:
 					tag:      word,
 					family:   fam,
 					attrs:    attrs,
+					startIdx: beg,
+					endIdx:   end - 1,
+				})
+			case strings.HasPrefix(word, TagColor):
+				// Handle {color:xxx} tags
+				tokens = append(tokens, &Token{
+					tag:      word,
+					family:   typeTagColor,
+					startIdx: beg,
+					endIdx:   end - 1,
+				})
+			case word == TagMonospace || strings.HasPrefix(word, "{{"):
+				// Handle {{monospace}} tags
+				tokens = append(tokens, &Token{
+					tag:      word,
+					family:   typeTagTextEffect,
 					startIdx: beg,
 					endIdx:   end - 1,
 				})
@@ -368,11 +422,26 @@ type Token struct {
 }
 
 func (t *Token) handleTextEffects(line string, out *strings.Builder) int {
-	word := line[t.startIdx+1 : t.endIdx]
+	// Handle {{monospace}} tags specially
+	if strings.HasPrefix(t.tag, "{{") {
+		// Find closing }}
+		closeIdx := strings.Index(line[t.startIdx+2:], "}}")
+		if closeIdx == -1 {
+			return t.endIdx
+		}
+		word := line[t.startIdx+2 : t.startIdx+2+closeIdx]
+		out.WriteString(replacements[TagMonospace])
+		out.WriteString(word)
+		out.WriteString(replacements[TagMonospace])
+		return t.startIdx + 2 + closeIdx + 1 // +1 for the second }
+	}
 
-	out.WriteString(replacements[string(line[t.startIdx])])
+	word := line[t.startIdx+1 : t.endIdx]
+	tagChar := string(line[t.startIdx])
+
+	out.WriteString(replacements[tagChar])
 	out.WriteString(word)
-	out.WriteString(replacements[string(line[t.startIdx])])
+	out.WriteString(replacements[tagChar])
 
 	if t.endIdx == len(line)-1 {
 		out.WriteByte(newLine)
@@ -506,8 +575,43 @@ func (t *Token) handleTable(line string, out *strings.Builder) int {
 	return t.endIdx
 }
 
+func (t *Token) handleColor(line string, out *strings.Builder) int {
+	// {color:red}text{color} -> just output the text, strip color tags
+	// Since markdown doesn't support colors, we just remove the tags
+	// The token.tag contains the opening tag like "{color:red}"
+	// We need to find the closing {color} and extract the text between
+
+	end := t.endIdx + 1
+	closeTag := "{color}"
+
+	// Find closing {color} tag
+	closeIdx := strings.Index(line[end:], closeTag)
+	if closeIdx == -1 {
+		// No closing tag, just skip the opening tag
+		return t.endIdx
+	}
+
+	// Extract text between opening and closing tags
+	text := line[end : end+closeIdx]
+	out.WriteString(text)
+
+	return end + closeIdx + len(closeTag) - 1
+}
+
 func isToken(inp string) bool {
 	return slices.Contains(validTags, inp)
+}
+
+// isTokenChar checks if a character could be part of a token (for stopping the default scan).
+func isTokenChar(c byte) bool {
+	return c == '*' || c == '{' || c == '}' || c == '[' || c == ']' ||
+		c == '_' || c == '-' || c == '+' || c == '^' || c == '~' || c == '?'
+}
+
+// isStartTokenChar checks if a character could start a token.
+func isStartTokenChar(c byte) bool {
+	return c == '*' || c == '{' || c == '[' ||
+		c == '_' || c == '-' || c == '+' || c == '^' || c == '~' || c == '?'
 }
 
 func tokenStarts(idx int, tokens []*Token) (*Token, bool) {
@@ -520,6 +624,10 @@ func tokenStarts(idx int, tokens []*Token) (*Token, bool) {
 }
 
 func getTagType(line string, beg int) string {
+	// Check for {{monospace}} first (two-character tag)
+	if beg+1 < len(line) && line[beg] == '{' && line[beg+1] == '{' {
+		return typeTagTextEffect
+	}
 	if isTextEffect(line[beg], line[beg+1]) {
 		return typeTagTextEffect
 	}
@@ -541,9 +649,19 @@ func getTagType(line string, beg int) string {
 	return typeTagOther
 }
 
+// textEffectChars contains all single-character text effect markers.
+var textEffectChars = map[byte]bool{
+	'*': true, // bold
+	'_': true, // italic
+	'-': true, // strikethrough
+	'+': true, // inserted
+	'^': true, // superscript
+	'~': true, // subscript
+}
+
 func isTextEffect(beg, next uint8) bool {
-	s := string(beg)
-	return s == TagBold && (next != ' ' && next != beg)
+	// Check if it's a text effect character followed by non-space and non-same character
+	return textEffectChars[beg] && next != ' ' && next != beg
 }
 
 func isListTag(beg, next uint8) bool {

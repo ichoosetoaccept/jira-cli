@@ -95,7 +95,7 @@ func TestParseTextEffectTags(t *testing.T) {
 		{
 			name:     "bold, italic and strikethrough",
 			input:    "Line with *bold*, _italic_ and -strikethrough- text. And _italics with *bold* text in it_.",
-			expected: "Line with **bold**, _italic_ and -strikethrough- text. And _italics with **bold** text in it_.\n",
+			expected: "Line with **bold**, _italic_ and ~~strikethrough~~ text. And _italics with *bold* text in it_.\n",
 		},
 		{
 			name:     "partially closed bold tag",
@@ -113,9 +113,75 @@ func TestParseTextEffectTags(t *testing.T) {
 			expected: "Line with **bold and _italic text.**\n",
 		},
 		{
-			name:     "normal sentence with braces and semicolon should be parsed as is",
+			name:     "monospace with special characters",
 			input:    "Line with semicolon inside curly braces {{MySQL::Conn()}}.",
-			expected: "Line with semicolon inside curly braces {{MySQL::Conn()}}.",
+			expected: "Line with semicolon inside curly braces `MySQL::Conn()`.\n",
+		},
+		{
+			name:     "strikethrough",
+			input:    "This is -deleted- text.",
+			expected: "This is ~~deleted~~ text.\n",
+		},
+		{
+			name:     "inserted text",
+			input:    "This is +inserted+ text.",
+			expected: "This is inserted text.\n",
+		},
+		{
+			name:     "superscript",
+			input:    "E=mc^2^",
+			expected: "E=mc2\n\n",
+		},
+		{
+			name:     "subscript",
+			input:    "H~2~O",
+			expected: "H2O\n",
+		},
+		{
+			name:     "monospace",
+			input:    "Use {{code}} for inline code.",
+			expected: "Use `code` for inline code.\n",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tc.expected, Parse(tc.input))
+		})
+	}
+}
+
+func TestParseColorTags(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "simple color tag",
+			input:    "{color:red}red text{color}",
+			expected: "red text\n",
+		},
+		{
+			name:     "color tag in sentence",
+			input:    "This is {color:blue}blue{color} text.",
+			expected: "This is blue text.\n",
+		},
+		{
+			name:     "multiple color tags",
+			input:    "{color:red}red{color} and {color:blue}blue{color}",
+			expected: "red and blue\n",
+		},
+		{
+			name:     "color tag with hex color",
+			input:    "{color:#ff0000}hex red{color}",
+			expected: "hex red\n",
 		},
 	}
 
@@ -228,7 +294,7 @@ func TestParseReferenceLinks(t *testing.T) {
 		{
 			name:     "valid link mixed with bold, italic and strikethrough text",
 			input:    "A *bold*, _italic_ and -strikethrough- text with [a link|https://ankit.pl] in between.",
-			expected: "A **bold**, _italic_ and -strikethrough- text with [a link](https://ankit.pl) in between.\n",
+			expected: "A **bold**, _italic_ and ~~strikethrough~~ text with [a link](https://ankit.pl) in between.\n",
 		},
 		{
 			name:     "invalid link",

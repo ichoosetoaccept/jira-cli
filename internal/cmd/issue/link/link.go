@@ -1,3 +1,4 @@
+// Package link provides the issue link command.
 package link
 
 import (
@@ -97,18 +98,24 @@ type linkParams struct {
 	debug           bool
 }
 
+const (
+	argIndexInwardKey  = 0
+	argIndexOutwardKey = 1
+	argIndexLinkType   = 2
+)
+
 func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *linkParams {
 	var inwardIssueKey, outwardIssueKey, linkType string
 
 	nargs := len(args)
-	if nargs >= 1 {
-		inwardIssueKey = cmdutil.GetJiraIssueKey(project, args[0])
+	if nargs > argIndexInwardKey {
+		inwardIssueKey = cmdutil.GetJiraIssueKey(project, args[argIndexInwardKey])
 	}
-	if nargs >= 2 {
-		outwardIssueKey = cmdutil.GetJiraIssueKey(project, args[1])
+	if nargs > argIndexOutwardKey {
+		outwardIssueKey = cmdutil.GetJiraIssueKey(project, args[argIndexOutwardKey])
 	}
-	if nargs >= 3 {
-		linkType = args[2]
+	if nargs > argIndexLinkType {
+		linkType = args[argIndexLinkType]
 	}
 
 	debug, err := flags.GetBool("debug")

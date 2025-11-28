@@ -1,5 +1,6 @@
 //go:build go1.12
 
+// Package version provides version information for the CLI.
 package version
 
 import "runtime/debug"

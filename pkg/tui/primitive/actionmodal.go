@@ -1,3 +1,4 @@
+// Package primitive provides TUI primitive components.
 package primitive
 
 import (
@@ -55,9 +56,15 @@ func NewActionModal() *ActionModal {
 	m.footer.SetTitleAlign(tview.AlignCenter)
 	m.footer.SetTextAlign(tview.AlignCenter).SetWordWrap(true)
 	m.footer.SetTextStyle(tcell.StyleDefault.Italic(true))
+	// Flex layout: form takes 3 parts, footer takes 1 part with fixed height of 2
+	const (
+		formProportion   = 3
+		footerHeight     = 2
+		footerProportion = 1
+	)
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(m.form, 0, 3, true).
-		AddItem(m.footer, 2, 1, false)
+		AddItem(m.form, 0, formProportion, true).
+		AddItem(m.footer, footerHeight, footerProportion, false)
 	m.frame = tview.NewFrame(flex).SetBorders(0, 0, 1, 0, 0, 0)
 	m.frame.SetBorder(true).
 		SetBackgroundColor(tview.Styles.ContrastBackgroundColor).
@@ -159,19 +166,27 @@ func (m *ActionModal) HasFocus() bool {
 	return m.form.HasFocus()
 }
 
+// Action modal layout constants.
+const (
+	actionModalWidthDivisor = 3 // Modal takes 1/3 of screen width
+	buttonPadding           = 4 // Padding around button label
+	buttonSpacing           = 2 // Space between buttons
+	modalHeightPadding      = 9 // Extra height for form elements and borders
+	modalWidthPadding       = 4 // Padding around modal content
+	centerDivisor           = 2 // Divide by 2 to center
+)
+
 // Draw draws this primitive onto the screen.
-//
-//nolint:mnd
 func (m *ActionModal) Draw(screen tcell.Screen) {
 	// Calculate the width of this modal.
 	buttonsWidth := 0
 	for i := 0; i < m.form.GetButtonCount(); i++ {
 		button := m.form.GetButton(i)
-		buttonsWidth += tview.TaggedStringWidth(button.GetLabel()) + 4 + 2
+		buttonsWidth += tview.TaggedStringWidth(button.GetLabel()) + buttonPadding + buttonSpacing
 	}
-	buttonsWidth -= 2
+	buttonsWidth -= buttonSpacing
 	screenWidth, screenHeight := screen.Size()
-	width := screenWidth / 3
+	width := screenWidth / actionModalWidthDivisor
 	if width < buttonsWidth {
 		width = buttonsWidth
 	}
@@ -193,10 +208,10 @@ func (m *ActionModal) Draw(screen tcell.Screen) {
 	}
 
 	// Set the modal's position and size.
-	height := len(lines) + 9
-	width += 4
-	x := (screenWidth - width) / 2
-	y := (screenHeight - height) / 2
+	height := len(lines) + modalHeightPadding
+	width += modalWidthPadding
+	x := (screenWidth - width) / centerDivisor
+	y := (screenHeight - height) / centerDivisor
 	m.SetRect(x, y, width, height)
 
 	// Draw the frame.

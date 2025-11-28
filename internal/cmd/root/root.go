@@ -77,7 +77,7 @@ func NewCmdRoot() *cobra.Command {
 		Use:   "jira <command> <subcommand>",
 		Short: "Interactive Jira CLI",
 		Long:  "Interactive Jira command line.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			return cmd.Help()
 		},
 		PersistentPreRun: func(cmd *cobra.Command, _ []string) {

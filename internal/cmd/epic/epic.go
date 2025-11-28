@@ -1,3 +1,4 @@
+// Package epic provides the epic commands.
 package epic
 
 import (

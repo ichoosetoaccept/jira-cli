@@ -1,3 +1,4 @@
+// Package cmdutil provides commands.
 package cmdutil
 
 import (
@@ -24,9 +25,15 @@ var (
 	ErrorInvalidDateTime = fmt.Errorf("datetime string should be in a valid format, eg: 2022-01-02 10:10:05 or 2022-01-02")
 )
 
+// Date format length constants.
+const (
+	shortDateLen     = 8  // YYYYMMDD
+	shortDateTimeLen = 14 // YYYYMMDDHHmmss
+	isoDateLen       = 10 // YYYY-MM-DD
+	isoDateDashes    = 2  // Number of dashes in ISO date
+)
+
 // DateStringToJiraFormatInLocation parses a standard string to jira compatible RFC3339 datetime format.
-//
-//nolint:mnd
 func DateStringToJiraFormatInLocation(value string, timezone string) (string, error) {
 	if value == "" || value == "0" || value == "0000-00-00 00:00:00" || value == "0000-00-00" || value == "00:00:00" {
 		return "", nil
@@ -39,12 +46,12 @@ func DateStringToJiraFormatInLocation(value string, timezone string) (string, er
 	layout := DateTimeLayout
 	if _, err := strconv.ParseInt(value, 10, 64); err == nil {
 		switch {
-		case len(value) == 8:
+		case len(value) == shortDateLen:
 			layout = ShortDateLayout
-		case len(value) == 14:
+		case len(value) == shortDateTimeLen:
 			layout = ShortDateTimeLayout
 		}
-	} else if len(value) == 10 && strings.Count(value, "-") == 2 {
+	} else if len(value) == isoDateLen && strings.Count(value, "-") == isoDateDashes {
 		layout = DateLayout
 	}
 

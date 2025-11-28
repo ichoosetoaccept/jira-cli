@@ -1,3 +1,4 @@
+// Package main provides commands.
 package main
 
 import (

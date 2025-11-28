@@ -122,6 +122,12 @@ func (i Issue) String() string {
 	return s.String()
 }
 
+// Layout spacing constants for issue view.
+const (
+	singleLineSpacing = 1
+	sectionSpacing    = 2
+)
+
 func (i Issue) fragments() []fragment {
 	scraps := []fragment{
 		{Body: i.header(), Parse: true},
@@ -131,9 +137,9 @@ func (i Issue) fragments() []fragment {
 	if desc != "" {
 		scraps = append(
 			scraps,
-			newBlankFragment(1),
+			newBlankFragment(singleLineSpacing),
 			fragment{Body: i.separator("Description")},
-			newBlankFragment(2),
+			newBlankFragment(sectionSpacing),
 			fragment{Body: desc, Parse: true},
 		)
 	}
@@ -141,43 +147,43 @@ func (i Issue) fragments() []fragment {
 	if len(i.Data.Fields.Subtasks) > 0 {
 		scraps = append(
 			scraps,
-			newBlankFragment(1),
+			newBlankFragment(singleLineSpacing),
 			fragment{Body: i.separator(fmt.Sprintf("%d Subtasks", len(i.Data.Fields.Subtasks)))},
-			newBlankFragment(2),
+			newBlankFragment(sectionSpacing),
 			fragment{Body: i.subtasks()},
-			newBlankFragment(1),
+			newBlankFragment(singleLineSpacing),
 		)
 	}
 
 	if len(i.Data.Fields.IssueLinks) > 0 {
 		scraps = append(
 			scraps,
-			newBlankFragment(1),
+			newBlankFragment(singleLineSpacing),
 			fragment{Body: i.separator("Linked Issues")},
-			newBlankFragment(2),
+			newBlankFragment(sectionSpacing),
 			fragment{Body: i.linkedIssues()},
-			newBlankFragment(1),
+			newBlankFragment(singleLineSpacing),
 		)
 	}
 
 	if i.Data.Fields.Comment.Total > 0 && i.Options.NumComments > 0 {
 		scraps = append(
 			scraps,
-			newBlankFragment(1),
+			newBlankFragment(singleLineSpacing),
 			fragment{Body: i.separator(fmt.Sprintf("%d Comments", i.Data.Fields.Comment.Total))},
-			newBlankFragment(2),
+			newBlankFragment(sectionSpacing),
 		)
 		for _, comment := range i.comments() {
 			scraps = append(
 				scraps,
 				fragment{Body: comment.meta},
-				newBlankFragment(1),
+				newBlankFragment(singleLineSpacing),
 				fragment{Body: comment.body, Parse: true},
 			)
 		}
 	}
 
-	return append(scraps, newBlankFragment(1), fragment{Body: i.footer()}, newBlankFragment(2))
+	return append(scraps, newBlankFragment(singleLineSpacing), fragment{Body: i.footer()}, newBlankFragment(sectionSpacing))
 }
 
 func (i Issue) separator(msg string) string {
@@ -276,10 +282,10 @@ func (i Issue) subtasks() string {
 	for idx := range i.Data.Fields.Subtasks {
 		task := i.Data.Fields.Subtasks[idx]
 
-		maxKeyLen = max(len(task.Key), maxKeyLen)
-		maxSummaryLen = max(len(task.Fields.Summary), maxSummaryLen)
-		maxStatusLen = max(len(task.Fields.Status.Name), maxStatusLen)
-		maxPriorityLen = max(len(task.Fields.Priority.Name), maxPriorityLen)
+		maxKeyLen = maxInt(len(task.Key), maxKeyLen)
+		maxSummaryLen = maxInt(len(task.Fields.Summary), maxSummaryLen)
+		maxStatusLen = maxInt(len(task.Fields.Status.Name), maxStatusLen)
+		maxPriorityLen = maxInt(len(task.Fields.Priority.Name), maxPriorityLen)
 	}
 
 	if maxSummaryLen < summaryLen {
@@ -345,11 +351,11 @@ func (i Issue) linkedIssues() string {
 		}
 		linkMap[linkType] = append(linkMap[linkType], linkedIssue)
 
-		maxKeyLen = max(len(linkedIssue.Key), maxKeyLen)
-		maxSummaryLen = max(len(linkedIssue.Fields.Summary), maxSummaryLen)
-		maxTypeLen = max(len(linkedIssue.Fields.IssueType.Name), maxTypeLen)
-		maxStatusLen = max(len(linkedIssue.Fields.Status.Name), maxStatusLen)
-		maxPriorityLen = max(len(linkedIssue.Fields.Priority.Name), maxPriorityLen)
+		maxKeyLen = maxInt(len(linkedIssue.Key), maxKeyLen)
+		maxSummaryLen = maxInt(len(linkedIssue.Fields.Summary), maxSummaryLen)
+		maxTypeLen = maxInt(len(linkedIssue.Fields.IssueType.Name), maxTypeLen)
+		maxStatusLen = maxInt(len(linkedIssue.Fields.Status.Name), maxStatusLen)
+		maxPriorityLen = maxInt(len(linkedIssue.Fields.Priority.Name), maxPriorityLen)
 	}
 
 	if maxSummaryLen < summaryLen {

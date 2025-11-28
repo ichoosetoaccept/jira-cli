@@ -129,11 +129,17 @@ func NewTable(opts ...TableOption) *Table {
 	tbl.initFooter()
 	tbl.initHelp()
 
+	// Grid layout: row 0 = table, row 1 = spacer, row 2 = footer
+	const (
+		rowTable  = 0
+		rowSpacer = 1
+		rowFooter = 2
+	)
 	grid := tview.NewGrid().
-		SetRows(0, 1, 2).
-		AddItem(tbl.view, 0, 0, 1, 1, 0, 0, true).
-		AddItem(tview.NewTextView(), 1, 0, 1, 1, 0, 0, false). // Dummy view to fake row padding.
-		AddItem(tbl.footer, 2, 0, 1, 1, 0, 0, false)
+		SetRows(rowTable, rowSpacer, rowFooter).
+		AddItem(tbl.view, rowTable, 0, 1, 1, 0, 0, true).
+		AddItem(tview.NewTextView(), rowSpacer, 0, 1, 1, 0, 0, false). // Dummy view to fake row padding.
+		AddItem(tbl.footer, rowFooter, 0, 1, 1, 0, 0, false)
 
 	tbl.action.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
 		if ev.Key() == tcell.KeyEsc || (ev.Key() == tcell.KeyRune && ev.Rune() == 'q') {
@@ -356,7 +362,7 @@ func (t *Table) initTable() {
 								fmt.Sprintf("Select desired state to transition %s to:", key),
 							)
 
-							t.action.SetDoneFunc(func(btnIndex int, btnLabel string) {
+							t.action.SetDoneFunc(func(_ int, btnLabel string) {
 								t.action.GetFooter().SetText("Processing. Please wait...").SetTextColor(tcell.ColorGray)
 								t.screen.ForceDraw()
 

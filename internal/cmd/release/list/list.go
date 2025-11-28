@@ -1,3 +1,4 @@
+// Package list provides commands.
 package list
 
 import (

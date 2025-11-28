@@ -39,7 +39,7 @@ func (el *EpicList) Render() error {
 			tui.WithTableStyle(el.Display.TableStyle),
 			tui.WithFixedColumns(el.Display.FixedColumns),
 			tui.WithSelectedFunc(navigate(el.Server)),
-			tui.WithViewModeFunc(func(r, c int, d any) (func() any, func(any) (string, error)) {
+			tui.WithViewModeFunc(func(r, _ int, d any) (func() any, func(any) (string, error)) {
 				dataFn := func() any {
 					data := d.(tui.TableData)
 					ci := data.GetIndex(fieldKey)

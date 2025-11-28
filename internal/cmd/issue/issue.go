@@ -1,3 +1,4 @@
+// Package issue provides commands.
 package issue
 
 import (

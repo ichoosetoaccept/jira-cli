@@ -58,12 +58,16 @@ func (i *InfoModal) SetAlign(align int) *InfoModal {
 	return i
 }
 
+// Modal layout constants.
+const (
+	infoModalWidthDivisor = 3 // Modal takes 1/3 of screen width
+	infoModalPadding      = 4 // Padding around modal content
+)
+
 // Draw draws this primitive onto the screen.
-//
-//nolint:mnd
 func (i *InfoModal) Draw(screen tcell.Screen) {
 	screenWidth, screenHeight := screen.Size()
-	width := screenWidth / 3
+	width := screenWidth / infoModalWidthDivisor
 
 	// Reset the text and find out how wide it is.
 	i.info.Clear()
@@ -76,10 +80,10 @@ func (i *InfoModal) Draw(screen tcell.Screen) {
 	}
 
 	// Set the modal's position and size.
-	height := len(lines) + 4
-	width += 4
-	x := (screenWidth - width) / 2
-	y := (screenHeight - height) / 2
+	height := len(lines) + infoModalPadding
+	width += infoModalPadding
+	x := (screenWidth - width) / centerDivisor
+	y := (screenHeight - height) / centerDivisor
 	i.info.SetRect(x, y, width, height)
 
 	i.info.SetBorder(true).SetTitleAlign(tview.AlignCenter)

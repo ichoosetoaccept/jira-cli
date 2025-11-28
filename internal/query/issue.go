@@ -1,3 +1,4 @@
+// Package query provides query building utilities for Jira.
 package query
 
 import (
@@ -344,8 +345,9 @@ func getPaginateParams(paginate string) (uint, uint, error) {
 			return 0, 0, errInvalidPaginateArg
 		}
 	} else {
+		const expectedParts = 2 // from:limit format
 		pieces := strings.Split(paginate, ":")
-		if len(pieces) != 2 {
+		if len(pieces) != expectedParts {
 			return 0, 0, errInvalidPaginateArg
 		}
 

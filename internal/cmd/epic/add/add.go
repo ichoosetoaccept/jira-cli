@@ -1,3 +1,4 @@
+// Package add provides the epic add command.
 package add
 
 import (

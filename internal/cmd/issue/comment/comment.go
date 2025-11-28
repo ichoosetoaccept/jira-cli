@@ -1,3 +1,4 @@
+// Package comment provides commands.
 package comment
 
 import (

@@ -1,3 +1,4 @@
+// Package completion provides shell completion commands.
 package completion
 
 import (
@@ -6,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const helpText = `Output shell completion code for the specified shell (bash, zsh, fish or PowerShell). 
+const helpText = `Output shell completion code for the specified shell (bash, zsh, fish or PowerShell).
 
 To load completions:
 

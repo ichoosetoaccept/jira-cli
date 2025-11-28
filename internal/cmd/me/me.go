@@ -1,3 +1,4 @@
+// Package me provides the me command to display current user.
 package me
 
 import (

@@ -358,7 +358,7 @@ func TestNoInputConfigurationMethods(t *testing.T) {
 	}{
 		{
 			name: "reads no_input from viper.Set (config file simulation)",
-			setup: func(t *testing.T) {
+			setup: func(_ *testing.T) {
 				viper.Reset()
 				viper.Set("no_input", true)
 			},

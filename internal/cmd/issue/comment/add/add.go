@@ -1,3 +1,4 @@
+// Package add provides commands.
 package add
 
 import (
@@ -19,7 +20,7 @@ const (
 	helpText = `Add adds comment to an issue.`
 	examples = `$ jira issue comment add
 
-# Pass required parameters to skip prompt 
+# Pass required parameters to skip prompt
 $ jira issue comment add ISSUE-1 "My comment"
 
 # Multi-line comment
@@ -127,15 +128,20 @@ type addParams struct {
 	debug    bool
 }
 
+const (
+	argIndexIssueKey = 0
+	argIndexBody     = 1
+)
+
 func parseArgsAndFlags(args []string, flags query.FlagParser) *addParams {
 	var issueKey, body string
 
 	nargs := len(args)
-	if nargs >= 1 {
-		issueKey = cmdutil.GetJiraIssueKey(viper.GetString("project.key"), args[0])
+	if nargs > argIndexIssueKey {
+		issueKey = cmdutil.GetJiraIssueKey(viper.GetString("project.key"), args[argIndexIssueKey])
 	}
-	if nargs >= 2 {
-		body = args[1]
+	if nargs > argIndexBody {
+		body = args[argIndexBody]
 	}
 
 	debug, err := flags.GetBool("debug")

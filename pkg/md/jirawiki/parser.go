@@ -1,3 +1,4 @@
+// Package jirawiki provides a parser for Jira wiki markup.
 package jirawiki
 
 import (
@@ -426,8 +427,10 @@ func (t *Token) handleFencedCodeBlock(idx int, lines []string, out *strings.Buil
 	fmt.Fprintf(out, "\n%s", replacements[t.tag])
 
 	if t, ok := t.attrs[attrTitle]; ok {
+		// Title format: "language.title" - extract just the title part
+		const titleParts = 2
 		pieces := strings.Split(t, ".")
-		if len(pieces) == 2 {
+		if len(pieces) == titleParts {
 			out.WriteString(pieces[1])
 		} else {
 			out.WriteString(t)
@@ -459,7 +462,8 @@ func (t *Token) handleFencedCodeBlock(idx int, lines []string, out *strings.Buil
 }
 
 func (t *Token) handleReferenceLink(line string, out *strings.Builder) int {
-	if len(line) < 2 {
+	const minLinkLen = 2 // At least "[" and "]"
+	if len(line) < minLinkLen {
 		return t.endIdx
 	}
 
@@ -468,7 +472,9 @@ func (t *Token) handleReferenceLink(line string, out *strings.Builder) int {
 
 	var link string
 
-	if len(pieces) == 2 {
+	// Link format: [text|url] has 2 parts
+	const linkParts = 2
+	if len(pieces) == linkParts {
 		link = fmt.Sprintf("[%s](%s)", pieces[0], pieces[1])
 	} else {
 		link = fmt.Sprintf("[](%s)", pieces[0])
@@ -545,9 +551,12 @@ func isListTag(beg, next uint8) bool {
 	return (s == TagOrderedList || s == TagUnorderedList) && (next == ' ' || next == beg)
 }
 
+// minTagLen is the minimum length for tags like "h1." or "bq.".
+const minTagLen = 3
+
 func isHeadingsTag(beg int, line string) bool {
 	size := len(line)
-	if size < 3 {
+	if size < minTagLen {
 		return false
 	}
 	return line[beg] == 'h' && line[2] == '.'
@@ -555,7 +564,7 @@ func isHeadingsTag(beg int, line string) bool {
 
 func isInlineBlockQuote(beg int, line string) bool {
 	size := len(line)
-	if size < 3 {
+	if size < minTagLen {
 		return false
 	}
 	return line[beg] == 'b' && line[2] == '.'
@@ -568,12 +577,11 @@ func isReferenceLink(beg int, line string) bool {
 
 	var end int
 
-	for beg < len(line) {
+	if beg < len(line) {
 		end = beg + 1
 		for end < len(line) && line[end] != ']' {
 			end++
 		}
-		break
 	}
 
 	return end < len(line) && line[end] == ']'

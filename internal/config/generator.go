@@ -1,3 +1,4 @@
+// Package config provides commands.
 package config
 
 import (
@@ -564,7 +565,8 @@ func (c *JiraCLIConfigGenerator) configureServerMeta(server, login string) error
 		return err
 	}
 
-	if len(info.VersionNumbers) == 3 {
+	const semverParts = 3 // major.minor.patch
+	if len(info.VersionNumbers) == semverParts {
 		c.value.version.major = info.VersionNumbers[0]
 		c.value.version.minor = info.VersionNumbers[1]
 		c.value.version.patch = info.VersionNumbers[2]
@@ -655,10 +657,12 @@ func (c *JiraCLIConfigGenerator) configureProjectAndBoardDetails() error {
 	}
 	c.value.board = c.boardsMap[strings.ToLower(board)]
 
+	// Skip first 2 suggestions (they are special options like "None" and "Search")
+	const specialOptionsCount = 2
 	if c.value.board == nil && !strings.EqualFold(board, optionNone) {
 		var suggest string
-		if len(defaultBoardSuggestions) > 2 {
-			suggest = strings.Join(defaultBoardSuggestions[2:], ", ")
+		if len(defaultBoardSuggestions) > specialOptionsCount {
+			suggest = strings.Join(defaultBoardSuggestions[specialOptionsCount:], ", ")
 		} else {
 			suggest = strings.Join(defaultBoardSuggestions, ", ")
 		}
@@ -681,13 +685,14 @@ func (*JiraCLIConfigGenerator) getSearchKeyword() (string, error) {
 			Help:    "Type board name to search",
 		},
 		Validate: func(val interface{}) error {
-			errInvalidKeyword := fmt.Errorf("enter atleast 3 characters to search")
+			const minSearchLen = 3
+			errInvalidKeyword := fmt.Errorf("enter atleast %d characters to search", minSearchLen)
 
 			str, ok := val.(string)
 			if !ok {
 				return errInvalidKeyword
 			}
-			if len(str) < 3 {
+			if len(str) < minSearchLen {
 				return errInvalidKeyword
 			}
 
@@ -719,8 +724,13 @@ func (c *JiraCLIConfigGenerator) searchAndAssignBoard(project, keyword string) e
 func (c *JiraCLIConfigGenerator) configureMetadata() error {
 	var err error
 
-	//nolint:mnd
-	isV9Compatible := c.value.version.major >= 9 || (c.value.version.major == 8 && c.value.version.minor > 4)
+	// Jira Server v9+ and v8.5+ use a different API for issue types
+	const (
+		jiraV9Major       = 9
+		jiraV8Major       = 8
+		jiraV8MinorCutoff = 4
+	)
+	isV9Compatible := c.value.version.major >= jiraV9Major || (c.value.version.major == jiraV8Major && c.value.version.minor > jiraV8MinorCutoff)
 	if c.value.installation == jira.InstallationTypeLocal && isV9Compatible {
 		err = c.configureIssueTypesForJiraServerV9()
 	} else {

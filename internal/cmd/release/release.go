@@ -1,3 +1,4 @@
+// Package release provides commands.
 package release
 
 import (

@@ -1,3 +1,4 @@
+// Package man provides man page generation commands.
 package man
 
 import (

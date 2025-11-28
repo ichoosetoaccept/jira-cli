@@ -1,3 +1,4 @@
+// Package list provides commands.
 package list
 
 import (
@@ -19,7 +20,7 @@ const (
 	helpText = `List lists issues in a given project.
 
 You can combine different flags to create a unique query. For instance,
-	
+
 # Issues that are of high priority, is in progress, was created this month, and has given labels
 $ jira issue list -yHigh -s"In Progress" --created month -lbackend -l"high prio"
 

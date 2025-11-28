@@ -190,7 +190,7 @@ func TestMax(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tc.expected, max(tc.input[0], tc.input[1]))
+			assert.Equal(t, tc.expected, maxInt(tc.input[0], tc.input[1]))
 		})
 	}
 }

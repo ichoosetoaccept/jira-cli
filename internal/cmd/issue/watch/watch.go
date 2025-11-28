@@ -1,3 +1,4 @@
+// Package watch provides the watch command for issue watchers.
 package watch
 
 import (
@@ -90,15 +91,21 @@ type watchParams struct {
 	debug bool
 }
 
+const (
+	argIndexKey  = 0
+	argIndexUser = 1
+	minSearchLen = 3
+)
+
 func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *watchParams {
 	var key, user string
 
 	nargs := len(args)
-	if nargs >= 1 {
-		key = cmdutil.GetJiraIssueKey(project, args[0])
+	if nargs > argIndexKey {
+		key = cmdutil.GetJiraIssueKey(project, args[argIndexKey])
 	}
-	if nargs >= 2 {
-		user = args[1]
+	if nargs > argIndexUser {
+		user = args[argIndexUser]
 	}
 
 	debug, err := flags.GetBool("debug")
@@ -236,7 +243,7 @@ func (ac *watchCmd) getSearchKeyword() error {
 			if !ok {
 				return errInvalidKeyword
 			}
-			if len(str) < 3 {
+			if len(str) < minSearchLen {
 				return errInvalidKeyword
 			}
 

@@ -1,3 +1,4 @@
+// Package issue provides issue-related filters.
 package issue
 
 import (

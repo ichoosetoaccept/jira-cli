@@ -92,7 +92,7 @@ func (pv *Preview) Paint(pd []PreviewData) error {
 
 	pv.data = pd
 
-	pv.sidebar.SetSelectionChangedFunc(func(r, c int) {
+	pv.sidebar.SetSelectionChangedFunc(func(r, _ int) {
 		pv.contents.view.Clear()
 		pv.printText("Loading...")
 
@@ -154,17 +154,29 @@ func (pv *Preview) renderContents(pd PreviewData) {
 	}
 }
 
+// Grid layout constants for preview.
+const (
+	gridRowMain     = 0
+	gridRowSpacer   = 1
+	gridRowFooter   = 2
+	gridColSidebar  = 0
+	gridColSpacer   = 1
+	gridColContents = 2
+	gridSpanTwo     = 2
+	gridSpanThree   = 3
+)
+
 func (pv *Preview) init() {
 	pv.initSidebar()
 	pv.initContents()
 	pv.initFooter()
 
 	grid := tview.NewGrid().
-		SetRows(0, 1, 2).
-		SetColumns(sidebarMaxWidth, 1, 0).
-		AddItem(pv.sidebar, 0, 0, 2, 1, 0, 0, true).
-		AddItem(pv.contents.view, 0, 2, 2, 1, 0, 0, false).
-		AddItem(pv.footer, 2, 0, 1, 3, 0, 0, false)
+		SetRows(gridRowMain, gridRowSpacer, gridRowFooter).
+		SetColumns(sidebarMaxWidth, gridColSpacer, gridColContents).
+		AddItem(pv.sidebar, gridRowMain, gridColSidebar, gridSpanTwo, 1, 0, 0, true).
+		AddItem(pv.contents.view, gridRowMain, gridColContents, gridSpanTwo, 1, 0, 0, false).
+		AddItem(pv.footer, gridRowFooter, gridColSidebar, 1, gridSpanThree, 0, 0, false)
 
 	pv.painter = tview.NewPages().
 		AddPage("primary", grid, true, true).

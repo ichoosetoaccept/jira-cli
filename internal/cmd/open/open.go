@@ -1,3 +1,4 @@
+// Package open provides the open command to open issues in browser.
 package open
 
 import (

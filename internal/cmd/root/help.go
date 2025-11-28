@@ -1,3 +1,4 @@
+// Package root provides commands.
 package root
 
 import (

@@ -1,3 +1,4 @@
+// Package view provides commands.
 package view
 
 import (

@@ -1,3 +1,4 @@
+// Package browser provides utilities for opening URLs in a browser.
 package browser
 
 import (

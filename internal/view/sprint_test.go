@@ -78,7 +78,7 @@ func TestSprintPreviewLayoutData(t *testing.T) {
 		Board:   "Test Board",
 		Server:  "https://test.local",
 		Data:    []*jira.Sprint{&sprint1, &sprint2},
-		Issues: func(boardID, sprintID int) []*jira.Issue {
+		Issues: func(_, sprintID int) []*jira.Issue {
 			if sprintID == 1 {
 				return []*jira.Issue{&issue1}
 			}

@@ -1,3 +1,4 @@
+// Package serverinfo provides commands.
 package serverinfo
 
 import (

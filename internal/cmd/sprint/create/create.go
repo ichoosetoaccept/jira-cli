@@ -1,3 +1,4 @@
+// Package create provides commands.
 package create
 
 import (
@@ -195,6 +196,7 @@ func getQuestions(params *SprintCreateParams) []*survey.Question {
 	return qs
 }
 
+// SprintCreateParams holds parameters for sprint creation.
 type SprintCreateParams struct {
 	SprintName string
 	StartDate  string
@@ -216,7 +218,7 @@ func validateDate(val interface{}) error {
 
 	_, err := time.Parse(time.DateOnly, val.(string))
 	if err != nil {
-		return errors.New("Invalid date")
+		return errors.New("invalid date")
 	}
 	return nil
 }

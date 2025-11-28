@@ -1,3 +1,4 @@
+// Package sprint provides commands.
 package sprint
 
 import (

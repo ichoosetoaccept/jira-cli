@@ -1,3 +1,4 @@
+// Package remote provides the remote link command.
 package remote
 
 import (
@@ -76,17 +77,23 @@ type linkParams struct {
 	debug    bool
 }
 
+const (
+	argIndexIssueKey = 0
+	argIndexURL      = 1
+	argIndexTitle    = 2
+)
+
 func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *linkParams {
 	var issueKey, url, title string
 	nargs := len(args)
-	if nargs >= 1 {
-		issueKey = cmdutil.GetJiraIssueKey(project, args[0])
+	if nargs > argIndexIssueKey {
+		issueKey = cmdutil.GetJiraIssueKey(project, args[argIndexIssueKey])
 	}
-	if nargs >= 2 {
-		url = args[1]
+	if nargs > argIndexURL {
+		url = args[argIndexURL]
 	}
-	if nargs >= 3 {
-		title = args[2]
+	if nargs > argIndexTitle {
+		title = args[argIndexTitle]
 	}
 
 	debug, err := flags.GetBool("debug")

@@ -1,3 +1,4 @@
+// Package move provides the issue move command.
 package move
 
 import (
@@ -136,15 +137,20 @@ type moveParams struct {
 	debug      bool
 }
 
+const (
+	argIndexKey   = 0
+	argIndexState = 1
+)
+
 func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *moveParams {
 	var key, state string
 
 	nargs := len(args)
-	if nargs >= 1 {
-		key = cmdutil.GetJiraIssueKey(project, args[0])
+	if nargs > argIndexKey {
+		key = cmdutil.GetJiraIssueKey(project, args[argIndexKey])
 	}
-	if nargs >= 2 {
-		state = args[1]
+	if nargs > argIndexState {
+		state = args[argIndexState]
 	}
 
 	comment, err := flags.GetString("comment")

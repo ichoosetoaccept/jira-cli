@@ -280,6 +280,7 @@ type SprintCreateResponse struct {
 	Goal          string `json:"goal"`
 }
 
+// CreateSprint creates a new sprint in the specified board.
 func (c *Client) CreateSprint(req *SprintCreateRequest) (*SprintCreateResponse, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -318,7 +319,9 @@ func injectBoardID(sprints []*Sprint, boardID int) {
 
 func reverse(s []*Sprint) {
 	n := len(s)
-	if n < 2 {
+	// Need at least 2 elements to reverse
+	const minElementsToReverse = 2
+	if n < minElementsToReverse {
 		return
 	}
 	for i := 0; i < n/2; i++ {

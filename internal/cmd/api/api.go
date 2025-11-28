@@ -1,3 +1,4 @@
+// Package api provides commands.
 package api
 
 import (
@@ -44,9 +45,9 @@ $ jira api /rest/api/3/issue/PROJ-123 --translate-fields`
 // NewCmdAPI is an api command.
 func NewCmdAPI() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "api [endpoint]",
-		Short: "Make authenticated requests to the Jira API",
-		Long:  helpText,
+		Use:     "api [endpoint]",
+		Short:   "Make authenticated requests to the Jira API",
+		Long:    helpText,
 		Example: examples,
 		Annotations: map[string]string{
 			"cmd:main":  "true",
@@ -65,7 +66,7 @@ func NewCmdAPI() *cobra.Command {
 	return &cmd
 }
 
-// translateCustomFields replaces customfield_* IDs with their friendly names from config
+// translateCustomFields replaces customfield_* IDs with their friendly names from config.
 func translateCustomFields(data []byte, debug bool) []byte {
 	// Get the custom fields from the config
 	configuredFields, err := getCustomFieldsMapping()
@@ -86,14 +87,16 @@ func translateCustomFields(data []byte, debug bool) []byte {
 	}
 
 	// Try to detect any customfield_* patterns in the response that aren't in our config
-	var unrecognizedFields []string
+	unrecognizedFields := make([]string, 0)
 	re := regexp.MustCompile(`"(customfield_\d+)"`)
 	matches := re.FindAllStringSubmatch(string(data), -1)
 
+	// Regex submatch returns [fullMatch, captureGroup1, ...], so index 1 is the captured field ID
+	const captureGroupIndex = 1
 	fieldSet := make(map[string]bool)
 	for _, match := range matches {
-		if len(match) >= 2 {
-			fieldID := match[1]
+		if len(match) > captureGroupIndex {
+			fieldID := match[captureGroupIndex]
 			if _, exists := configuredFields[fieldID]; !exists {
 				fieldSet[fieldID] = true
 			}
@@ -135,7 +138,7 @@ func translateCustomFields(data []byte, debug bool) []byte {
 	return []byte(dataStr)
 }
 
-// getCustomFieldsMapping returns a map of custom field IDs to their friendly names
+// getCustomFieldsMapping returns a map of custom field IDs to their friendly names.
 func getCustomFieldsMapping() (map[string]string, error) {
 	var configuredFields []jira.IssueTypeField
 
@@ -233,7 +236,7 @@ func runAPI(cmd *cobra.Command, args []string) {
 		cmdutil.Failed("Request failed: %s", err)
 	}
 
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	cmdutil.ExitIfError(err)

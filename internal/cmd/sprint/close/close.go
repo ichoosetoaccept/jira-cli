@@ -1,3 +1,4 @@
+// Package close provides commands.
 package close
 
 import (

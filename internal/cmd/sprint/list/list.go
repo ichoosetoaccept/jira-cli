@@ -1,3 +1,4 @@
+// Package list provides commands.
 package list
 
 import (
@@ -240,7 +241,7 @@ func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, board
 		Board:   boardName,
 		Server:  server,
 		Data:    sprints,
-		Issues: func(boardID, sprintID int) []*jira.Issue {
+		Issues: func(_, sprintID int) []*jira.Issue {
 			iq, err := getIssueQuery(project, flags, sprintQuery.Params().ShowAllIssues)
 			if err != nil {
 				return []*jira.Issue{}

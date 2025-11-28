@@ -1,3 +1,4 @@
+// Package add provides the sprint add command.
 package add
 
 import (

@@ -1,3 +1,4 @@
+// Package refresh provides the refresh command for session cookie renewal.
 package refresh
 
 import (
@@ -25,7 +26,7 @@ It allows you to update your JSESSIONID without re-running the full 'jira init' 
 	}
 }
 
-func refresh(cmd *cobra.Command, _ []string) {
+func refresh(_ *cobra.Command, _ []string) {
 	authType := viper.GetString("auth_type")
 	if authType != string(jira.AuthTypeCookie) {
 		cmdutil.Failed("This command is only for cookie-based authentication (current auth_type: %s)", authType)

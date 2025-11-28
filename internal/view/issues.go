@@ -71,7 +71,7 @@ func (l *IssueList) Render() error {
 		tui.WithTableFooterText(l.FooterText),
 		tui.WithTableHelpText(tableHelpText),
 		tui.WithSelectedFunc(navigate(l.Server)),
-		tui.WithViewModeFunc(func(r, c int, _ any) (func() any, func(any) (string, error)) {
+		tui.WithViewModeFunc(func(r, _ int, _ any) (func() any, func(any) (string, error)) {
 			dataFn := func() any {
 				ci := data.GetIndex(fieldKey)
 				iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), issue.NewNumCommentsFilter(l.Display.Comments))
@@ -89,7 +89,7 @@ func (l *IssueList) Render() error {
 		}),
 		tui.WithCopyFunc(copyURL(l.Server)),
 		tui.WithCopyKeyFunc(copyKey()),
-		tui.WithMoveFunc(func(r, c int) func() (string, []string, tui.MoveHandlerFunc, string, tui.RefreshTableStateFunc) {
+		tui.WithMoveFunc(func(r, _ int) func() (string, []string, tui.MoveHandlerFunc, string, tui.RefreshTableStateFunc) {
 			dataFn := func() (string, []string, tui.MoveHandlerFunc, string, tui.RefreshTableStateFunc) {
 				key := data[r][data.GetIndex(fieldKey)]
 				client := api.DefaultClient(false)
@@ -123,7 +123,7 @@ func (l *IssueList) Render() error {
 				statusFieldIdx := data.GetIndex(fieldStatus)
 				currentStatus := data.Get(r, statusFieldIdx)
 
-				return key, actions, actionHandler, currentStatus, func(r, c int, val string) {
+				return key, actions, actionHandler, currentStatus, func(r, _ int, val string) {
 					data.Update(r, statusFieldIdx, val)
 				}
 			}

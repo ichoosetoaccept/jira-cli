@@ -1,3 +1,4 @@
+// Package api provides the Jira API client wrapper.
 package api
 
 import (

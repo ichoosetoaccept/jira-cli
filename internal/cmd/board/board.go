@@ -1,3 +1,4 @@
+// Package board provides commands.
 package board
 
 import (

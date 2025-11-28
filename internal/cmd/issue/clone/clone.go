@@ -1,3 +1,4 @@
+// Package clone provides the issue clone command.
 package clone
 
 import (
@@ -209,10 +210,11 @@ func (cc *cloneCmd) getActualCreateParams(project string, issue *jira.Issue) *cr
 		body = ""
 	}
 
+	const expectedKeyValueParts = 2
 	if len(cc.params.replace) > 0 {
 		for _, r := range cc.params.replace {
 			pieces := strings.Split(r, ":")
-			if len(pieces) != 2 {
+			if len(pieces) != expectedKeyValueParts {
 				fmt.Println()
 				cmdutil.Fail("Invalid replace string, must be in format <find>:<replace>. Skipping replacement...")
 			} else {

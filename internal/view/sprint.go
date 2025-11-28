@@ -51,7 +51,7 @@ func (sl *SprintList) Render() error {
 			tui.WithFixedColumns(sl.Display.FixedColumns),
 			tui.WithTableStyle(sl.Display.TableStyle),
 			tui.WithSelectedFunc(navigate(sl.Server)),
-			tui.WithViewModeFunc(func(r, c int, d interface{}) (func() interface{}, func(interface{}) (string, error)) {
+			tui.WithViewModeFunc(func(r, _ int, d interface{}) (func() interface{}, func(interface{}) (string, error)) {
 				dataFn := func() interface{} {
 					data := d.(tui.TableData)
 					ci := data.GetIndex(fieldKey)
@@ -110,7 +110,7 @@ func (sl *SprintList) data() []tui.PreviewData {
 	data = append(data, tui.PreviewData{
 		Key:  "help",
 		Menu: "?",
-		Contents: func(s string) interface{} {
+		Contents: func(_ string) interface{} {
 			return helpText
 		},
 	})
@@ -126,7 +126,7 @@ func (sl *SprintList) data() []tui.PreviewData {
 				cmdutil.FormatDateTimeHuman(s.StartDate, time.RFC3339),
 				cmdutil.FormatDateTimeHuman(s.EndDate, time.RFC3339),
 			)),
-			Contents: func(key string) interface{} {
+			Contents: func(_ string) interface{} {
 				issues := sl.Issues(bid, sid)
 				return sl.tabularize(issues)
 			},
@@ -192,7 +192,7 @@ func (sl *SprintList) tableData() tui.TableData {
 	var data tui.TableData
 
 	headers := sl.tableHeader()
-	if !(sl.Display.Plain && sl.Display.NoHeaders) {
+	if !sl.Display.Plain || !sl.Display.NoHeaders {
 		data = append(data, headers)
 	}
 	if len(headers) == 0 {

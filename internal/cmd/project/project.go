@@ -1,3 +1,4 @@
+// Package project provides the project commands.
 package project
 
 import (

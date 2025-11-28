@@ -1,3 +1,4 @@
+// Package delete provides the issue delete command.
 package delete
 
 import (

@@ -1,3 +1,4 @@
+// Package unlink provides the issue unlink command.
 package unlink
 
 import (
@@ -80,15 +81,20 @@ type unlinkParams struct {
 	debug           bool
 }
 
+const (
+	argIndexInwardKey  = 0
+	argIndexOutwardKey = 1
+)
+
 func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *unlinkParams {
 	var inwardIssueKey, outwardIssueKey string
 
 	nargs := len(args)
-	if nargs >= 1 {
-		inwardIssueKey = cmdutil.GetJiraIssueKey(project, args[0])
+	if nargs > argIndexInwardKey {
+		inwardIssueKey = cmdutil.GetJiraIssueKey(project, args[argIndexInwardKey])
 	}
-	if nargs >= 2 {
-		outwardIssueKey = cmdutil.GetJiraIssueKey(project, args[1])
+	if nargs > argIndexOutwardKey {
+		outwardIssueKey = cmdutil.GetJiraIssueKey(project, args[argIndexOutwardKey])
 	}
 
 	debug, err := flags.GetBool("debug")

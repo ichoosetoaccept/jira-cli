@@ -1,3 +1,4 @@
+// Package add provides the worklog add command.
 package add
 
 import (
@@ -122,15 +123,20 @@ type addParams struct {
 	debug       bool
 }
 
+const (
+	argIndexIssueKey  = 0
+	argIndexTimeSpent = 1
+)
+
 func parseArgsAndFlags(args []string, flags query.FlagParser) *addParams {
 	var issueKey, timeSpent string
 
 	nargs := len(args)
-	if nargs >= 1 {
-		issueKey = cmdutil.GetJiraIssueKey(viper.GetString("project.key"), args[0])
+	if nargs > argIndexIssueKey {
+		issueKey = cmdutil.GetJiraIssueKey(viper.GetString("project.key"), args[argIndexIssueKey])
 	}
-	if nargs >= 2 {
-		timeSpent = args[1]
+	if nargs > argIndexTimeSpent {
+		timeSpent = args[argIndexTimeSpent]
 	}
 
 	debug, err := flags.GetBool("debug")

@@ -1,3 +1,4 @@
+// Package edit provides commands.
 package edit
 
 import (

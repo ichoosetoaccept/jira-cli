@@ -1,3 +1,4 @@
+// Package surveyext provides extended survey prompts.
 package surveyext
 
 // This file is a copy of survey.Editor extension by GitHub CLI with slight modifications.

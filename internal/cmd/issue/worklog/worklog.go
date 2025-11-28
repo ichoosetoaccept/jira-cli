@@ -1,3 +1,4 @@
+// Package worklog provides the issue worklog commands.
 package worklog
 
 import (

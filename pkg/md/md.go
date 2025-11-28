@@ -59,10 +59,29 @@ func stripColorTags(input string) string {
 	return colorTagRegex.ReplaceAllString(input, "$2")
 }
 
+// normalizeLineEndings converts Windows-style \r\n to Unix-style \n.
+// This is needed because j2m doesn't handle \r\n properly for tables.
+func normalizeLineEndings(input string) string {
+	return strings.ReplaceAll(input, "\r\n", "\n")
+}
+
+// fixEscapedMarkup handles escaped/alternative Jira markup syntax.
+// {*}text{*} -> *text* (bold)
+// {_}text{_} -> _text_ (italic).
+func fixEscapedMarkup(input string) string {
+	// Replace {*}...{*} with *...*
+	input = strings.ReplaceAll(input, "{*}", "*")
+	// Replace {_}...{_} with _..._
+	input = strings.ReplaceAll(input, "{_}", "_")
+	return input
+}
+
 // FromJiraMD translates Jira flavored markdown to CommonMark.
 // Color tags are stripped (content preserved).
 func FromJiraMD(jfm string) string {
-	// Strip color tags first, then convert
+	// Normalize line endings, fix escaped markup, strip color tags, then convert
+	jfm = normalizeLineEndings(jfm)
+	jfm = fixEscapedMarkup(jfm)
 	return j2m.JiraToMD(stripColorTags(jfm))
 }
 

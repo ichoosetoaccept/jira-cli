@@ -8,6 +8,14 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
 
+  # Conventional commit message validation
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.3.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [--strict, --force-scope, --verbose]
+
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
     hooks:

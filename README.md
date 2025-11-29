@@ -25,6 +25,8 @@ jira init
 jira refresh
 ```
 
+> 💡 **Tip:** Use [Jironimo](https://github.com/ichoosetoaccept/jironimo) - a browser extension that copies your JSESSIONID with one click!
+
 ### Improved Jira Wiki Markup Rendering
 
 Enhanced markdown conversion for `jira issue view` using the [j2m](https://github.com/FokkeZB/J2M) library:
